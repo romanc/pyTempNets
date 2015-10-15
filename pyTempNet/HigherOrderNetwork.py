@@ -259,10 +259,6 @@ class HigherOrderNetwork:
         # NOTE this only makes sense for 3rd order 
         assert( self.k == 3 )
         
-        # extract two-paths for nodes
-        if( self.tn.tpcount == -1 ):
-            self.tn.extractTwoPaths()
-
         # extract three-paths to connect the nodes
         if( self.kpcount == -1 ):
             self.extractKPaths()
