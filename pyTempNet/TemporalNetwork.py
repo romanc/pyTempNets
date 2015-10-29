@@ -124,6 +124,7 @@ class TemporalNetwork:
         self.g1 = 0
         self.g2 = 0
         self.g2n = 0
+        self.g2nn = 0
 
       
     def filterEdges(self, edge_filter):
@@ -347,7 +348,8 @@ class TemporalNetwork:
         # Invalidate cached aggregate networks
         g1 = 0
         g2 = 0
-        g2n = 0                
+        g2n = 0
+        g2nn = 0
         Log.add('finished.')
         end = tm.clock()
         print( 'time elapsed (twopaths):', (end - start) )
@@ -511,6 +513,84 @@ class TemporalNetwork:
         
         Log.add('finished.')
         return self.g2n
+    
+    
+    def igraphSecondOrderNullNew(self):
+        """Returns a second-order null Markov model 
+           corresponding to the first-order aggregate network. This network
+           is a second-order representation of the weighted time-aggregated network. In order to 
+           compute the null model, the strongly connected component of the second-order network 
+           needs to have at least two nodes.          
+           """
+        if self.g2nn != 0:
+            return self.g2nn
+        
+        Log.add('Constructing second-order null model of aggregated network ...')
+
+        g1 = self.igraphFirstOrder()
+        g2 = self.igraphSecondOrder().components(mode='STRONG').giant()
+        n_vertices = len(g2.vs)
+
+        if n_vertices<=1:
+            Log.add('Strongly connected component is empty for delta = ' + str(self.delta), Severity.ERROR)
+            raise EmptySCCError()
+        
+        T = RWTransitionMatrix( g2 )
+        pi = StationaryDistribution(T)
+        
+        # Construct null model second-order network
+        self.g2nn = igraph.Graph(directed=True)
+
+        # This ensures that vertices are ordered in the same way as in the empirical second-order network
+        for v in g2.vs():
+            self.g2nn.add_vertex(name=v["name"])
+            
+        edge_dict = {}
+        sep = self.separator
+        for e in g1.es:
+            # e is a tuple (src, dst)
+            src, dst = e.tuple
+            if( src != dst ):
+                for e2 in g1.es:
+                    src2, dst2 = e2.tuple
+                    if( src2 != dst2 and src2 == dst ):
+                        w = np.abs( pi[e2.index] )
+                        if( w > 0 ):
+                            #str(tp[0])+sep+str(tp[1])
+                            edge_dict[(str(src)+sep+str(dst), str(src2)+sep+str(dst))] = w
+        
+        ### TODO: This operation is the bottleneck for large data sets. We should only iterate over those edge pairs, that actually are two-paths
+        #edge_dict = {}
+        #vertices = g2.vs()
+        #sep = self.separator
+        #for i in range(n_vertices):
+            #e1 = vertices[i]
+            #e1name = e1["name"]
+            #a,b = e1name.split(sep)
+            #for j in range(i+1, n_vertices):
+                #e2 = vertices[j]
+                #e2name = e2["name"]
+                #a_,b_ = e2name.split(sep)
+                
+                ## Check whether this pair of nodes in the second-order 
+                ## network is a *possible* forward two-path
+                #if b == a_:
+                    #w = np.abs(pi[e2.index])
+                    #if w>0:
+                        #edge_dict[(e1name, e2name)] = w
+                        
+                #if b_ == a:
+                    #w = np.abs(pi[e1.index])
+                    #if w>0:
+                        #edge_dict[(e2name, e1name)] = w
+        
+        # add all edges to the graph in one go
+        self.g2nn.add_edges( edge_dict.keys() )
+        self.g2nn.es["weight"] = list(edge_dict.values())
+        
+        Log.add('finished.')
+        return self.g2nn
+
 
 
     def ShuffleEdges(self, l=0):        
