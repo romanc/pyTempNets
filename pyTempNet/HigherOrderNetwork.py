@@ -215,20 +215,46 @@ class HigherOrderNetwork:
         return self.gn
 
 
-    #def igraphKthOrderNull(self):
-        #"""Returns a kth-order null Markov model
-            #corresponding to the first-order aggregate network. This network
-            #is a kth-order representation of the weighted time-aggregated network.
+    def igraphKthOrderNull(self):
+        """Returns a kth-order null Markov model
+           corresponding to the first-order aggregate network. This network
+           is a kth-order representation of the weighted time-aggregated network.
 
-            #Note: In order to compute the null model, the strongly connected
-            #component of the kth-order network needs to have at least two nodes.
-            #"""
-            
-            ## TODO
-            ## self.gkn = ...
-            
-            ## NOTE: pay attention to the fact, that a null model only makes sense for k > 1.
-        #return ig.Graph()
+           Note: In order to compute the null model, the strongly connected
+           component of the kth-order network needs to have at least two nodes.
+           """
+        assert( self.k > 1 )
+        Log.add('Constructing null model of k-th order aggregated network ...')
+        
+        # compute all possible k-paths ( extract k-path with delta = t_end - t_start )
+        #observation_length = max(self.tn.ordered_times) - min(self.tn.ordered_times)
+        possible_k_paths = self.__extract_k_paths( self.tn, self.k, len(self.tn.ordered_times) )
+        
+        # build a graph based on all these possible two paths
+        #   create vertex list and edge directory
+        vertices = list()
+        edges    = dict()
+        sep      = self.tn.separator
+        for path in possible_k_paths:
+            n1 = sep.join([str(n) for (i,n) in enumerate(path['nodes']) if i < self.k])
+            n2 = sep.join([str(n) for (i,n) in enumerate(path['nodes']) if i > 0])
+            vertices.append(n1)
+            vertices.append(n2)
+            key = (n1, n2)
+            edges[key] = edges.get(key, 0) + path['weight']
+
+        #   remove duplicate vertices by building a set
+        vertices = list(set(vertices))
+
+        # build graph and return
+        self.gn0 = ig.Graph( n = len(vertices), directed=True )
+        self.gn0.vs['name'] = vertices
+        self.gn0.add_edges( edges.keys() )
+        self.gn0.es['weight'] = list( edges.values() )
+        
+        Log.add('finished.')
+        # return the graph
+        return self.gn0
 
 
     def __extract_k_paths(self, tmpNet, order, dt):
