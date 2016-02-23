@@ -347,6 +347,8 @@ class TemporalNetwork:
 
             # For each possible middle node v (i.e. all target nodes at time t) ... 
             for v in tgts[t]:
+                indeg_v = len(tgts[t][v])
+
                 # Get the minimum and maximum indices of time stamps in the ordered list of "activities" of node v
                 # which continue a time-respecting path, i.e. we are interested in 
                 # the time stamps t' of all links (v,*;t') such that t'  \in (t, t+delta]
@@ -360,19 +362,20 @@ class TemporalNetwork:
                 # For all time-stamped links (v,*;t') with t' \in (t, t+delta] ...
                 for j in range(min_ix, max_ix+1):
                     future_t = self.activities[v][j]
+                    outdeg_v = len(srcs[future_t][v])
+                    weight = float(1)/(indeg_v * outdeg_v)
+
                     # For all possible IN-edges at time t that link *to* node v
                     for e_in in tgts[t][v]:
                         # Combine with all OUT-edges at time future_t that link *from* v
                         for e_out in srcs[future_t][v]:
                             s = e_in[0]
                             d = e_out[1]
+                            # if there is no self-loop
                             if s != v and v != d:
-                                indeg_v = len(tgts[t][v])
-                                outdeg_v = len(srcs[future_t][v])
-
                                 # Create a weighted two-path tuple
                                 # (s, v, d, weight)
-                                two_path = (s,v,d, float(1)/(indeg_v*outdeg_v))
+                                two_path = (s,v,d, weight)
 
                                 # TODO: Add support for time-stamped links which have link weights w by themselves, i.e. (u,v;t;w)
 
