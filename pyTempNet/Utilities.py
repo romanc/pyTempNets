@@ -143,6 +143,26 @@ def readFile(filename, sep=',', fformat="TEDGE", timestampformat="%s", maxlines=
             Log.add('finished.')
         return tn.TemporalNetwork(twopaths = twopaths, sep=sep)
 
+def fromIgraph( graph, separator=";", forceWeights=False ):
+    """Returns a temporal network instance from an igraph object
+
+    @param graph: igraph object to construct temporal network from
+    @param separator: a separator character to be used for the naming of higher-
+    order nodes v-w
+    @param forceWeights: whether or not to consider weights, if the igraph-
+    object is weighted.
+    """
+
+    if forceWeights and graph.is_weighted():
+        raise NotImplementedError
+        # NOTE This works but the TemporalNetwork class has no means to deal
+        # NOTE with edge weights
+        # NOTE see for example the TODO-note in extractTwoPath()
+        #temporalEdges = [ (e.source, e.target, 1, e["weight"]) for e in graph.es ]
+        #return tn.TemporalNetwork( tedges=temporalEdges, sep=separator, weighted=True )
+    else:
+        temporalEdges =[ (e.source, e.target, 1) for e in graph.es ]
+        return tn.TemporalNetwork( tedges=temporalEdges, sep=separator )
 
 def getSparseAdjacencyMatrix( graph, attribute=None, transposed=False ):
     """Returns a sparse adjacency matrix of the given graph.
