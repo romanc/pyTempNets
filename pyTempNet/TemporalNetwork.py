@@ -291,7 +291,7 @@ class TemporalNetwork:
         d = self.getInterEventTimes()
 
         if not d:
-            summary += 'no inter event times found \n'
+            summary += 'No inter event times found.\n'
         else:
             summary += 'Avg. inter-event dt:\t' + str(np.mean(d)) + '\n'
             summary += 'Min/Max inter-event dt:\t' + str(min(d)) + '/' + str(max(d)) + '\n'
