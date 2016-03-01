@@ -289,9 +289,12 @@ class TemporalNetwork:
         summary += 'Time stamps:\t\t' + str(len(self.ordered_times)) + '\n'
 
         d = self.getInterEventTimes()
-    
-        summary += 'Avg. inter-event dt:\t' + str(np.mean(d)) + '\n'
-        summary += 'Min/Max inter-event dt:\t' + str(min(d)) + '/' + str(max(d)) + '\n'
+
+        if not d:
+            summary += 'no inter event times found \n'
+        else:
+            summary += 'Avg. inter-event dt:\t' + str(np.mean(d)) + '\n'
+            summary += 'Min/Max inter-event dt:\t' + str(min(d)) + '/' + str(max(d)) + '\n'
 
         summary += 'Max Time Diff (delta):\t' +str(self.delta) + '\n'
         summary += 'Two-paths:\t\t'

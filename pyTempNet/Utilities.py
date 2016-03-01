@@ -161,7 +161,11 @@ def fromIgraph( graph, separator=";", forceWeights=False ):
         #temporalEdges = [ (e.source, e.target, 1, e["weight"]) for e in graph.es ]
         #return tn.TemporalNetwork( tedges=temporalEdges, sep=separator, weighted=True )
     else:
-        temporalEdges =[ (e.source, e.target, 1) for e in graph.es ]
+        temporalEdges =[ (e.source, e.target, 2) for e in graph.es ]
+        # set the first edge to be at time 1 and all other at time 2 to get
+        # path of length 2. If you all at the same timestep the current 
+        # implementation of extractTwoPath() will not find any two paths
+        temporalEdges[0] = (temporalEdges[0][0], temporalEdges[0][1], 1)
         return tn.TemporalNetwork( tedges=temporalEdges, sep=separator )
 
 def getSparseAdjacencyMatrix( graph, attribute=None, transposed=False ):
